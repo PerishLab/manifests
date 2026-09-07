@@ -1,6 +1,10 @@
 [layout]
 
 [[layout.seat]]
+path = "clusters"
+note = "Kubernetes manifests, one subtree per cluster; the cluster is the first axis because a sealing key is cluster-specific."
+
+[[layout.seat]]
 path = ".plumb"
 note = "Plumb-owned affirmation records."
 

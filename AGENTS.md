@@ -24,9 +24,18 @@ lifecycle. The layer between had no owner, and this repository is it.
   cluster. **Sealing keys are per cluster and are not interchangeable**: a
   ciphertext sealed for one cluster cannot be opened in another, so the keys are
   named for their clusters and must stay that way.
-- Nothing is committed yet beyond this skeleton. The manifests themselves still
-  live in the frozen Infra remote and arrive as separate landings, each named in
-  `perish.code/infra-repository-removable`.
+- Manifests live under `clusters/<cluster>/`, the shape they had in Infra. The
+  cluster is the first axis because a sealing key is cluster-specific and a
+  ciphertext sealed for one cluster cannot be opened in another; nothing else
+  about the layout is invented here.
+- The sealing plane has landed for all three sealed clusters: the controller
+  chart, its public cert, and the operating notes beside them. The rest of the
+  platform still lives in the frozen Infra remote and arrives as separate
+  landings, tracked in `perish.code/manifests-carries-the-platform`.
+- A ciphertext travels with the workload it belongs to, not with the controller.
+  `perish.top` and `liberte.top` keep each `*-sealedsecret.yaml` under its own
+  component, so those arrive with their components. `lab.perish.top` keeps its
+  one beside the controller, which is how Infra had it.
 
 ## What this repository refuses
 

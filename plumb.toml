@@ -1,0 +1,18 @@
+[layout]
+
+[[layout.seat]]
+path = ".plumb"
+note = "Plumb-owned affirmation records."
+
+[[layout.file]]
+name = ["AGENTS.md"]
+rule = ["rule://seat/affirmed"]
+note = "The repository entrypoint is affirmed against its governed faces."
+
+[[layout.file]]
+name = ["LICENSE"]
+note = "Repository licensing."
+
+[[layout.file]]
+name = ["plumb.toml", "ectropy.toml", "runseal.toml", ".gitignore"]
+note = "Governance declarations."

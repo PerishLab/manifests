@@ -1,0 +1,20 @@
+[comment]
+allow = false
+
+[limit]
+block = 4
+fanout = 10
+file = 300
+markup = 8
+param = 4
+path = 3
+
+[module]
+roots = []
+
+[scan]
+exclude = []
+include = []
+
+[word]
+single = true

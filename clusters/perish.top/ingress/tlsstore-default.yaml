@@ -1,0 +1,10 @@
+# Traefik default TLS store: every *.perish.top IngressRoute without an explicit cert
+# serves the wildcard. Must sit in Traefik's namespace (kube-system in k3s).
+apiVersion: traefik.io/v1alpha1
+kind: TLSStore
+metadata:
+  name: default
+  namespace: kube-system
+spec:
+  defaultCertificate:
+    secretName: wildcard-perish-top-tls

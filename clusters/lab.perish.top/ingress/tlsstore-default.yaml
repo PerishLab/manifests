@@ -1,0 +1,15 @@
+# Traefik default TLS store: every *.lab.perish.top route without an explicit cert serves
+# the wildcard. Must sit in Traefik's namespace (kube-system in k3s).
+#
+# This is what makes TLS a property of the CLUSTER rather than of each experiment chart:
+# an experiment only has to ask for TLS (a plain Ingress carrying
+# traefik.ingress.kubernetes.io/router.tls: "true"), never to name a certificate. Charts
+# under test therefore stay portable and carry no lab-specific secret name.
+apiVersion: traefik.io/v1alpha1
+kind: TLSStore
+metadata:
+  name: default
+  namespace: kube-system
+spec:
+  defaultCertificate:
+    secretName: wildcard-lab-perish-top-tls

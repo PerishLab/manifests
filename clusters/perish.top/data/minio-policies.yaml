@@ -1,0 +1,104 @@
+# MinIO IAM policy definitions for human OIDC users and dedicated machine
+# identities. These are applied with the official `mc` client; MinIO does not
+# consume this ConfigMap directly.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minio-policies
+  namespace: data
+data:
+  perish-minio-readonly.json: |
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetBucketLocation",
+            "s3:ListAllMyBuckets"
+          ],
+          "Resource": [
+            "arn:aws:s3:::*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:ListBucket",
+            "s3:ListBucketMultipartUploads",
+            "s3:ListBucketVersions"
+          ],
+          "Resource": [
+            "arn:aws:s3:::*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetObject",
+            "s3:GetObjectVersion"
+          ],
+          "Resource": [
+            "arn:aws:s3:::*/*"
+          ]
+        }
+      ]
+    }
+  perish-minio-readwrite.json: |
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetBucketLocation",
+            "s3:ListAllMyBuckets"
+          ],
+          "Resource": [
+            "arn:aws:s3:::*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:ListBucket",
+            "s3:ListBucketMultipartUploads",
+            "s3:ListBucketVersions"
+          ],
+          "Resource": [
+            "arn:aws:s3:::*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:AbortMultipartUpload",
+            "s3:DeleteObject",
+            "s3:DeleteObjectVersion",
+            "s3:GetObject",
+            "s3:GetObjectVersion",
+            "s3:ListMultipartUploadParts",
+            "s3:PutObject"
+          ],
+          "Resource": [
+            "arn:aws:s3:::*/*"
+          ]
+        }
+      ]
+    }
+  vpn-config-publisher.json: |
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:PutObject"
+          ],
+          "Resource": [
+            "arn:aws:s3:::vpn-config/clash/caigou.yml",
+            "arn:aws:s3:::vpn-config/clash/perish.yml"
+          ]
+        }
+      ]
+    }

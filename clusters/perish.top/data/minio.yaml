@@ -1,0 +1,233 @@
+# Platform shared MinIO — single-node standalone S3 object store for in-domain apps
+# (Forgejo LFS/Actions artifacts first; wiring deferred to the forge layer). Root creds
+# from the SealedSecret in ./secrets/. Data on a local-path PVC (/mnt/k3s). API :9000,
+# console :9001. Public capability hostnames are s3.perish.top (API),
+# config.perish.top (stable vpn-config object paths), and oss.perish.top (OSS
+# console); console login is delegated to authentik OIDC.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: data
+  labels:
+    app: minio
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          # RELEASE.2025-04-22T22-12-26Z is the last verified OSS image here whose
+          # Console exposes the OIDC login entry. Later tested latest
+          # (RELEASE.2025-09-07T16-13-09Z) reports loginStrategy=form only.
+          image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+          args: ["server", "/data", "--console-address", ":9001"]
+          envFrom:
+            - secretRef:
+                name: minio-secret
+          ports:
+            - name: api
+              containerPort: 9000
+            - name: console
+              containerPort: 9001
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: api
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: minio-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-data
+  namespace: data
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: data
+  labels:
+    app: minio
+spec:
+  selector:
+    app: minio
+  ports:
+    - name: api
+      port: 9000
+      targetPort: api
+    - name: console
+      port: 9001
+      targetPort: console
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: minio-api
+  namespace: data
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`s3.perish.top`)
+      kind: Rule
+      services:
+        - name: minio
+          port: 9000
+  tls: {}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: config-vpn-config-web
+  namespace: data
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`config.perish.top`)
+      kind: Rule
+      middlewares:
+        - name: config-vpn-config-https-redirect
+      services:
+        - name: minio
+          port: 9000
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: config-vpn-config-https-redirect
+  namespace: data
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: config-vpn-config
+  namespace: data
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`config.perish.top`)
+      kind: Rule
+      middlewares:
+        - name: config-vpn-config-prefix
+      services:
+        - name: minio
+          port: 9000
+  tls: {}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: config-vpn-config-prefix
+  namespace: data
+spec:
+  replacePathRegex:
+    regex: ^/(.*)
+    replacement: /vpn-config/${1}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: minio-console-web
+  namespace: data
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`oss.perish.top`)
+      kind: Rule
+      middlewares:
+        - name: minio-console-https-redirect
+      services:
+        - name: minio
+          port: 9001
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: minio-console-https-redirect
+  namespace: data
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: minio-console
+  namespace: data
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`oss.perish.top`) && PathPrefix(`/static/`)
+      kind: Rule
+      priority: 100
+      middlewares:
+        - name: edge-cache-immutable
+          namespace: kube-system
+        - name: edge-compress
+          namespace: kube-system
+      services:
+        - name: minio
+          port: 9001
+    - match: >-
+        Host(`oss.perish.top`) && (PathPrefix(`/styles/`) ||
+        PathPrefix(`/images/`) || Path(`/Loader.svg`) || Path(`/manifest.json`) ||
+        Path(`/apple-icon-180x180.png`) || Path(`/favicon-16x16.png`) ||
+        Path(`/favicon-32x32.png`) || Path(`/favicon-96x96.png`) ||
+        Path(`/safari-pinned-tab.svg`))
+      kind: Rule
+      priority: 90
+      middlewares:
+        - name: edge-cache-short
+          namespace: kube-system
+        - name: edge-compress
+          namespace: kube-system
+      services:
+        - name: minio
+          port: 9001
+    - match: Host(`oss.perish.top`)
+      kind: Rule
+      middlewares:
+        - name: edge-compress
+          namespace: kube-system
+      services:
+        - name: minio
+          port: 9001
+  tls: {}

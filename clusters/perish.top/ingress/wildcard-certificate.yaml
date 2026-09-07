@@ -1,0 +1,20 @@
+# Wildcard cert for *.perish.top, in kube-system so the Traefik default TLSStore can use
+# it. Issued via DNS-01 (prod). Renews automatically. Apex perish.top is intentionally
+# OMITTED: all apps are subdomains (auth./git./k8s.perish.top), and including the apex
+# forces two DNS-01 challenges on the SAME _acme-challenge.perish.top TXT, which races and
+# fails intermittently. Single name = single challenge = reliable. NOTE: perish.top DNS
+# now points to us-02; the old liberte cluster must stop issuing *.perish.top to avoid LE
+# duplicate-cert rate limits (owner is moving santi to liberte.top).
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-perish-top
+  namespace: kube-system
+spec:
+  secretName: wildcard-perish-top-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: "*.perish.top"
+  dnsNames:
+    - "*.perish.top"

@@ -1,0 +1,23 @@
+# cert-manager via k3s built-in helm-controller, mirroring perish-top. This cluster
+# is k8s 1.35 (k3s v1.35.5+k3s1), which satisfies cert-manager 1.20's >=1.31
+# requirement. Namespace declared explicitly (ns convention), so createNamespace: false.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cert-manager
+  labels:
+    estate.perish.top/layer: ingress
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: cert-manager
+  namespace: kube-system
+spec:
+  repo: https://charts.jetstack.io
+  chart: cert-manager
+  version: v1.20.2
+  targetNamespace: cert-manager
+  createNamespace: false
+  set:
+    crds.enabled: "true"

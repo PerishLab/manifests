@@ -28,10 +28,18 @@ lifecycle. The layer between had no owner, and this repository is it.
   cluster is the first axis because a sealing key is cluster-specific and a
   ciphertext sealed for one cluster cannot be opened in another; nothing else
   about the layout is invented here.
-- The sealing plane has landed for all three sealed clusters: the controller
-  chart, its public cert, and the operating notes beside them. The rest of the
-  platform still lives in the frozen Infra remote and arrives as separate
-  landings, tracked in `perish.code/manifests-carries-the-platform`.
+- Landed so far: the sealing plane for all three sealed clusters, and the
+  platform layer proper — ingress with its certificates and DNS solver on
+  `perish.top` and `lab.perish.top`, the shared data services on `perish.top`,
+  scheduling priority, and `liberte.top`'s shared PostgreSQL. The forge, the
+  identity plane, cluster access, the lab experiment surface and everything
+  under `mirror.perish.lan` still live in the frozen Infra remote and arrive as
+  separate landings, tracked in `perish.code/manifests-carries-the-platform`.
+- PostgreSQL exists twice, once per cluster, and the two are unrelated
+  instances rather than one service seen from two places. `perish.top`'s is the
+  shared data-plane StatefulSet; `liberte.top`'s is that cluster's own
+  multi-tenant instance whose sole tenant is authentik. Neither may be treated
+  as a copy of the other.
 - A ciphertext travels with the workload it belongs to, not with the controller.
   `perish.top` and `liberte.top` keep each `*-sealedsecret.yaml` under its own
   component, so those arrive with their components. `lab.perish.top` keeps its

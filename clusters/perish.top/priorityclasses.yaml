@@ -1,0 +1,17 @@
+# Cluster-scoped PriorityClasses for the no-swap single node: platform-critical workloads
+# (postgres, core data) must never be evicted for the CI runner, which is preemptible.
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: perish-platform-high
+value: 1000000
+globalDefault: false
+description: "Platform-critical (postgres/data). Evicted last on a no-swap node."
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: perish-runner-low
+value: -10
+globalDefault: false
+description: "Preemptible CI runner (forgejo-runner). Evicted first under memory pressure."

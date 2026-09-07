@@ -1,0 +1,130 @@
+# Homestead shared PostgreSQL — a single self-managed StatefulSet that backs
+# in-domain apps (authentik first; future tenants reuse the same instance with
+# their own database + role). Plain StatefulSet (no operator): official postgres
+# image pulled straight from docker.io (node DNS root-fixed, no mirror), data on
+# a local-path PVC (lands on the 100G /mnt/k3s disk). Single node, single replica.
+#
+# Tenant provisioning: each app gets a database + login role, created once on
+# first init by /docker-entrypoint-initdb.d SQL (mounted from the ConfigMap
+# below). Role passwords come from env, sourced from the SealedSecret in
+# ./secrets/. initdb SQL runs ONLY when the data dir is empty (first boot);
+# adding a new tenant later means a manual `CREATE ROLE/DATABASE`.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data
+  labels:
+    estate.perish.top/layer: data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: data
+  labels:
+    app: postgres
+spec:
+  # Headless: stable DNS postgres.data.svc.cluster.local for the single StatefulSet pod.
+  clusterIP: None
+  selector:
+    app: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-initdb
+  namespace: data
+data:
+  # Runs once on first init (empty data dir). Idempotent-guarded so a re-run won't
+  # error on existing objects. Passwords are read from env (injected from the
+  # SealedSecret), never baked into this committed ConfigMap.
+  10-authentik.sql: |
+    \getenv AUTHENTIK_PASSWORD AUTHENTIK_DB_PASSWORD
+    SELECT format('CREATE ROLE authentik LOGIN PASSWORD %L', :'AUTHENTIK_PASSWORD')
+      WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'authentik')
+    \gexec
+    SELECT 'CREATE DATABASE authentik OWNER authentik'
+      WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'authentik')
+    \gexec
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: data
+  labels:
+    app: postgres
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      securityContext:
+        # postgres image runs as uid 999; fsGroup lets it own the mounted PVC.
+        fsGroup: 999
+      containers:
+        - name: postgres
+          image: docker.io/library/postgres:17-alpine
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_SUPERUSER_PASSWORD
+            - name: AUTHENTIK_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: AUTHENTIK_DB_PASSWORD
+            # Keep PGDATA in a subdir so the PVC root (with lost+found) isn't the data dir.
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: initdb
+              mountPath: /docker-entrypoint-initdb.d
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres"]
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+      volumes:
+        - name: initdb
+          configMap:
+            name: postgres-initdb
+            defaultMode: 0444
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        # default SC local-path -> /mnt/k3s/local-path on the 100G data disk
+        resources:
+          requests:
+            storage: 20Gi

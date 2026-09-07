@@ -1,0 +1,150 @@
+# Forgejo — the in-domain forge (git.perish.top). Hosts app source + their Deployment
+# manifests (apps live in self-governed Forgejo repos; this platform repo only references
+# their Services at the ingress layer).
+#
+# Deployed via k3s helm-controller (HelmChart CR) from the official OCI chart. Chart 17.x
+# bundles no DB/cache subchart — points at the shared platform Postgres (../data/, tenant
+# db/role `forgejo`) and uses Forgejo's built-in cache/leveldb queue (no Redis). Image
+# code.forgejo.org/forgejo/forgejo (rootless). Git over SSH ENABLED — the rootless pod runs
+# Forgejo's built-in SSH server (START_SSH_SERVER) on 2222 internally, published on the node's
+# :22 via the forgejo-ssh-public LoadBalancer (k3s ServiceLB / klipper-lb) below; clone URLs
+# advertise :22 (SSH_PORT). HTTP is served via the IngressRoute. The host's own admin sshd was
+# moved off :22 to :2077 to free the intuitive git port (see hosts/zxiyun/us-02).
+# LFS/attachments stay on the local PVC for now; minio (S3) wiring is a follow-up.
+# Authentik OIDC is live; its remaining reproducibility debt is tracked in identity/AGENTS.md.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: forge
+  labels:
+    estate.perish.top/layer: forge
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: forgejo
+  namespace: kube-system
+spec:
+  chart: oci://code.forgejo.org/forgejo-helm/forgejo
+  version: "17.1.1"
+  targetNamespace: forge
+  createNamespace: false
+  valuesContent: |-
+    ingress:
+      enabled: false
+    service:
+      http:
+        type: ClusterIP
+        port: 3000
+    persistence:
+      enabled: true
+      size: 20Gi          # /data: repos, LFS, attachments, ssh host keys — local-path → /mnt/k3s
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 2Gi          # git upload-pack/actions-fetch spikes OOM'd (exit137) at 512Mi under 3-platform CI → 502s failed Checkout; node has ~12Gi free, forge is core-platform
+
+    gitea:
+      admin:
+        existingSecret: forgejo-secret   # keys: username, password
+        email: admin@perish.top
+        passwordMode: keepUpdated
+      additionalConfigFromEnvs:
+        - name: GITEA__database__PASSWD
+          valueFrom:
+            secretKeyRef:
+              name: forgejo-secret
+              key: db-password
+      config:
+        APP_NAME: "perish.top forge"
+        RUN_MODE: prod
+        server:
+          DOMAIN: git.perish.top
+          ROOT_URL: https://git.perish.top/
+          HTTP_PORT: 3000
+          # Git over SSH: rootless pod runs the built-in server on 2222 internally;
+          # advertised (clone-URL) port is 22, reached via the forgejo-ssh-public LB.
+          DISABLE_SSH: false
+          START_SSH_SERVER: true
+          SSH_DOMAIN: git.perish.top
+          SSH_PORT: 22            # advertised in clone URLs (host :22 via LB)
+          SSH_LISTEN_PORT: 2222   # rootless pod cannot bind <1024; LB targetPort=ssh
+        database:
+          DB_TYPE: postgres
+          HOST: postgres.data.svc.cluster.local:5432
+          NAME: forgejo
+          USER: forgejo
+        service:
+          DISABLE_REGISTRATION: false
+          ALLOW_ONLY_EXTERNAL_REGISTRATION: true
+          SHOW_REGISTRATION_BUTTON: false
+          REQUIRE_EXTERNAL_REGISTRATION_PASSWORD: false
+          ENABLE_INTERNAL_SIGNIN: false
+          ENABLE_BASIC_AUTHENTICATION: false
+        oauth2_client:
+          ENABLE_AUTO_REGISTRATION: true
+          ACCOUNT_LINKING: disabled
+          UPDATE_AVATAR: true
+        openid:
+          ENABLE_OPENID_SIGNIN: false
+          ENABLE_OPENID_SIGNUP: false
+        session:
+          PROVIDER: db
+        cache:
+          ADAPTER: memory
+        queue:
+          TYPE: level
+        actions:
+          ENABLED: true
+          # Resolve short-form `uses: owner/repo` against THIS instance instead of the built-in
+          # default data.forgejo.org (Germany) — that cross-continent fetch intermittently fails
+          # from the HK runners, so ~half of CI runs died at checkout. Actions are mirrored locally
+          # as pull-mirrors (orgs: actions/denoland/dtolnay, synced from github by us-02 which has
+          # good github connectivity); runners then fetch them over the same reliable HK→us-02 git
+          # path they already use to clone repos. NOTE: workflows that hardcode the full
+          # `https://data.forgejo.org/...@vN` URL bypass this and must switch to short form.
+          DEFAULT_ACTIONS_URL: self
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: forgejo
+  namespace: forge
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`git.perish.top`)
+      kind: Rule
+      services:
+        - name: forgejo-http
+          port: 3000
+  tls: {}   # default wildcard TLSStore (*.perish.top)
+---
+# Public git-over-SSH endpoint. The chart's own forgejo-ssh (ClusterIP:22) is
+# in-cluster only; this LoadBalancer publishes it on the node's :22 via k3s
+# ServiceLB (klipper-lb), same mechanism Traefik uses for :80/:443. targetPort
+# "ssh" resolves to the rootless pod's SSH_LISTEN_PORT (2222).
+apiVersion: v1
+kind: Service
+metadata:
+  name: forgejo-ssh-public
+  namespace: forge
+  labels:
+    app.kubernetes.io/instance: forgejo
+    app.kubernetes.io/name: forgejo
+    estate.perish.top/exposure: public-ssh
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Cluster
+  selector:
+    app.kubernetes.io/instance: forgejo
+    app.kubernetes.io/name: forgejo
+  ports:
+    - name: ssh
+      port: 22
+      targetPort: ssh
+      protocol: TCP

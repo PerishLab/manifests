@@ -31,10 +31,17 @@ lifecycle. The layer between had no owner, and this repository is it.
 - Landed so far: the sealing plane for all three sealed clusters, and the
   platform layer proper — ingress with its certificates and DNS solver on
   `perish.top` and `lab.perish.top`, the shared data services on `perish.top`,
-  scheduling priority, `liberte.top`'s shared PostgreSQL, and the forge itself.
-  The identity plane, cluster access, the lab experiment surface and everything
-  under `mirror.perish.lan` still live in the frozen Infra remote and arrive as
-  separate landings, tracked in `perish.code/manifests-carries-the-platform`.
+  scheduling priority, `liberte.top`'s shared PostgreSQL, the forge itself, and
+  the lab experiment namespace. The identity plane, cluster access and
+  everything under `mirror.perish.lan` still live in the frozen Infra remote and
+  arrive as separate landings, tracked in
+  `perish.code/manifests-carries-the-platform`.
+- A script that operated a manifest does not come with it. Three have been left
+  behind so far — the sealing-key backup, the Helm smoke test, and Infra's own
+  operator commands — each because this repository takes manifests and because
+  each depended on a Deno namespace being retired. What they did is written out
+  as commands in the AGENTS.md beside the manifest they served, so the procedure
+  survives the program.
 - Forgejo runs on this platform and the platform's source lives in Forgejo. That
   circularity is real and is why the forge's own manifest belongs here rather
   than in a product repository: a repository cannot bootstrap the server that

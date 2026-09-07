@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: experiments
+  labels:
+    estate.perish.top/cluster: lab-perish-top
+    estate.perish.top/purpose: helm-experiments

@@ -1,0 +1,140 @@
+# Platform shared PostgreSQL — a single self-managed StatefulSet backing every in-domain
+# app (authentik first; Forgejo etc. reuse the same instance with their own database +
+# role). Plain StatefulSet (no operator): official postgres image (docker.io, direct via
+# clean DNS), data on a local-path PVC (/mnt/k3s). Single node, single replica.
+#
+# Tenant provisioning: each app gets a database + login role, created once on first init
+# by /docker-entrypoint-initdb.d SQL (from the ConfigMap). Role passwords come from
+# env (SealedSecret in ./secrets/). initdb runs ONLY on an empty data dir (first boot);
+# adding a tenant later = manual CREATE ROLE/DATABASE (see AGENTS).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data
+  labels:
+    estate.perish.top/layer: data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: data
+  labels:
+    app: postgres
+spec:
+  clusterIP: None
+  selector:
+    app: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-initdb
+  namespace: data
+data:
+  10-authentik.sql: |
+    \getenv AUTHENTIK_PASSWORD AUTHENTIK_DB_PASSWORD
+    SELECT format('CREATE ROLE authentik LOGIN PASSWORD %L', :'AUTHENTIK_PASSWORD')
+      WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'authentik')
+    \gexec
+    SELECT 'CREATE DATABASE authentik OWNER authentik'
+      WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'authentik')
+    \gexec
+  20-forgejo.sql: |
+    \getenv FORGEJO_PASSWORD FORGEJO_DB_PASSWORD
+    SELECT format('CREATE ROLE forgejo LOGIN PASSWORD %L', :'FORGEJO_PASSWORD')
+      WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'forgejo')
+    \gexec
+    SELECT 'CREATE DATABASE forgejo OWNER forgejo'
+      WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'forgejo')
+    \gexec
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: data
+  labels:
+    app: postgres
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      priorityClassName: perish-platform-high
+      securityContext:
+        fsGroup: 999
+      containers:
+        - name: postgres
+          image: docker.io/library/postgres:17-alpine
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_SUPERUSER_PASSWORD
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_SUPERUSER_PASSWORD
+            - name: AUTHENTIK_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: AUTHENTIK_DB_PASSWORD
+            - name: FORGEJO_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: FORGEJO_DB_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: initdb
+              mountPath: /docker-entrypoint-initdb.d
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres"]
+            initialDelaySeconds: 30
+            periodSeconds: 15
+      volumes:
+        - name: initdb
+          configMap:
+            name: postgres-initdb
+            defaultMode: 0444
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 20Gi

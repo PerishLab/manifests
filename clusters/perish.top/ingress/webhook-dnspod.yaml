@@ -1,0 +1,16 @@
+# cert-manager DNS-01 solver webhook for Tencent Cloud DNSPod (imroc). Installed into
+# the cert-manager namespace; apply AFTER cert-manager is Ready. This mirrors the LIVE
+# liberte.top/hk-03 setup (imroc chart, groupName acme.dnspod.com, solverName dnspod),
+# which diverged from the older reodwind webhook in the old hk-01 stack. Version unpinned to match
+# hk-03 (chart tracks latest compatible with cert-manager v1.20.2).
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: cert-manager-webhook-dnspod
+  namespace: kube-system
+spec:
+  repo: https://imroc.github.io/cert-manager-webhook-dnspod
+  chart: cert-manager-webhook-dnspod
+  targetNamespace: cert-manager
+  set:
+    groupName: acme.dnspod.com

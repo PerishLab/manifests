@@ -1,0 +1,33 @@
+# k3s-bundled Traefik overrides (HelmChartConfig patches the auto-deployed
+# traefik HelmChart). Was applied by hand once (kubectl.kubernetes.io/
+# last-applied-configuration, no git source) — captured here so it is
+# reproducible.
+#
+# allowCrossNamespace: IngressRoutes reference middlewares/services across
+# namespaces (kept from the original hand-applied config).
+#
+# websecure.readTimeout = 0: Traefik v3 defaults respondingTimeouts.readTimeout
+# to 60s — the max duration to read a whole request INCLUDING its body. A
+# container image push whose blob upload runs longer than 60s (a large layer,
+# a slow link, or several layers docker uploads concurrently splitting the
+# bandwidth) is cut at 60s: a single stream gets 502, docker's multiplexed
+# HTTP/2 streams surface it as "499". Measured on git.perish.top: a throttled
+# 6 MB PUT at 58.6s → 201, at 61.4s → 502. 0 = no total cap; idleTimeout
+# (default 180s) still reaps a genuinely stalled connection, which is the
+# right protection for an upload path.
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  failurePolicy: reinstall
+  valuesContent: |-
+    providers:
+      kubernetesCRD:
+        allowCrossNamespace: true
+    ports:
+      websecure:
+        transport:
+          respondingTimeouts:
+            readTimeout: "0s"

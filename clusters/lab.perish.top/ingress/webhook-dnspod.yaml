@@ -1,0 +1,26 @@
+# cert-manager DNS-01 solver webhook for Tencent Cloud DNSPod (imroc). Installed into
+# the cert-manager namespace; apply AFTER cert-manager is Ready. Same webhook as
+# perish-top and liberte.top/hk-03 (groupName acme.dnspod.com, solverName dnspod) — NOT
+# the older reodwind webhook.
+#
+# TWO DELIBERATE DIVERGENCES from clusters/perish.top/ingress/webhook-dnspod.yaml:
+#
+# 1. Pinned to 1.5.2. perish-top left it unpinned "to match hk-03", which preserves drift
+#    rather than adopting deliberately. Bump this line to adopt a new version; do not let
+#    it move on its own.
+# 2. `chart` is the absolute release tarball URL and there is no `repo`, so the install
+#    job never runs `helm repo add`. On this host that step hung and crash-looped the job
+#    three times against https://imroc.github.io/... even though the same fetch succeeded
+#    10/10 from an ordinary pod and from the same klipper image run by hand. The tarball
+#    URL is reachable from the node in ~0.8s, so skipping the index fetch removes the
+#    failure without hiding a real network fault.
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: cert-manager-webhook-dnspod
+  namespace: kube-system
+spec:
+  chart: https://github.com/imroc/cert-manager-webhook-dnspod/releases/download/cert-manager-webhook-dnspod-1.5.2/cert-manager-webhook-dnspod-1.5.2.tgz
+  targetNamespace: cert-manager
+  set:
+    groupName: acme.dnspod.com

@@ -48,7 +48,7 @@ Forgejo 登录源 `authentik`(OAuth2 source ID 1)是当前主账号入口。普�
 
 原先有一个 `deno task infra authentik user group add <username> forgejo:user|forgejo:admin`
 的命令行,随 Infra 一同退役,**没有继任者**。加组现在直接在 authentik 里做——身份系统本身即权威。
-authentik 这个平面归 `perish.code/ensign-oidc-selfhost`,不属本仓库;本目录只记 Forgejo 侧
+authentik 这个平面不属本仓库;本目录只记 Forgejo 侧
 依赖哪些组名:`forgejo:user`(普通用户)、`forgejo:admin`(Forgejo admin,低于域级 SuperAdmin)、
 `forgejo:restricted`。
 
@@ -77,7 +77,7 @@ Forgejo API,结束后无论成功失败都按精确 token name 撤销,本地不�
 重建 Forgejo DB 会使两台 appliance 的注册失效；token 生成在本集群完成，注册与
 `runner-reg` Secret 的落点在各 mirror 集群。完整流程只维护于 `clusters/mirror.perish.lan/AGENTS.md`,本目录不复制第二份。
 该目录**尚未迁入本仓库**,仍在冻结的 Infra 远端(`github.com/PerishCode/infra`,`main` `2d098f3`);
-其归属未定,见 `perish.code/manifests-carries-the-platform`。
+其归属未定,见 PerishLab/manifests#1。
 
 ## Actions 解析（本地镜像，`DEFAULT_ACTIONS_URL=self`）
 

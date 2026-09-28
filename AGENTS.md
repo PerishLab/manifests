@@ -41,11 +41,14 @@ lifecycle. The layer between had no owner, and this repository is it.
   each depended on a Deno namespace being retired. What they did is written out
   as commands in the AGENTS.md beside the manifest they served, so the procedure
   survives the program.
-- Forgejo runs on this platform and the platform's source lives in Forgejo. That
-  circularity is real and is why the forge's own manifest belongs here rather
-  than in a product repository: a repository cannot bootstrap the server that
-  hosts it. Nothing else about the forge is here — runner registration, runtime
-  state and job images are owned elsewhere and are named, not copied.
+- Forgejo runs on this platform as part of the platform layer, so its manifest
+  belongs here rather than in a product repository. It is no longer where the
+  estate's source lives — every repository, this one included, is canonical on
+  GitHub — but it stays live and still serves consumers such as the
+  `git.perish.top` cargo index. Nothing else about the forge is here: runner
+  registration and runtime state live with the mirror cluster, whose landing is
+  tracked in PerishLab/manifests#2, and the Forgejo job image has no current
+  owner since the images repository was archived. They are named, not copied.
 - PostgreSQL exists twice, once per cluster, and the two are unrelated
   instances rather than one service seen from two places. `perish.top`'s is the
   shared data-plane StatefulSet; `liberte.top`'s is that cluster's own

@@ -113,7 +113,7 @@ kubectl -n data run minio-mc-init --image=quay.io/minio/mc:latest \
 已存在 policy 时上面会跳过。如果需要变更 policy 内容,先确认没有非预期会话依赖旧策略,再用 `mc admin policy
 remove` 后重跑初始化。
 
-`vpn-config-publisher` 用户凭据只进入本仓库
+`vpn-config-publisher` 用户凭据只进入 secrets 仓库的
 `.local/secrets/vpn-config/publish.env` 与 GitHub environment `vpn-config-production` 的
 `VPN_PUBLISH_ENV_B64`；不创建集群常驻 Secret。创建/重置该用户属于凭据变更，必须独立授权，且通过临时
 `mc` Pod 的 stdin 传入，避免出现在 Pod spec、命令行或日志中。

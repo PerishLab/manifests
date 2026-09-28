@@ -34,8 +34,7 @@ lifecycle. The layer between had no owner, and this repository is it.
   scheduling priority, `liberte.top`'s shared PostgreSQL, the forge itself, and
   the lab experiment namespace. The identity plane, cluster access and
   everything under `mirror.perish.lan` still live in the frozen Infra remote and
-  arrive as separate landings, tracked in
-  `perish.code/manifests-carries-the-platform`.
+  arrive as separate landings, tracked in PerishLab/manifests#2.
 - A script that operated a manifest does not come with it. Three have been left
   behind so far — the sealing-key backup, the Helm smoke test, and Infra's own
   operator commands — each because this repository takes manifests and because

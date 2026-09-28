@@ -77,7 +77,7 @@ Forgejo API,结束后无论成功失败都按精确 token name 撤销,本地不�
 重建 Forgejo DB 会使两台 appliance 的注册失效；token 生成在本集群完成，注册与
 `runner-reg` Secret 的落点在各 mirror 集群。完整流程只维护于 `clusters/mirror.perish.lan/AGENTS.md`,本目录不复制第二份。
 该目录**尚未迁入本仓库**,仍在冻结的 Infra 远端(`github.com/PerishCode/infra`,`main` `2d098f3`);
-其归属未定,见 PerishLab/manifests#1。
+其落点见 PerishLab/manifests#2;原属主 actions 已归档,runner 注册目前无属主。
 
 ## Actions 解析（本地镜像，`DEFAULT_ACTIONS_URL=self`）
 
@@ -113,7 +113,7 @@ denoland/setup-deno · dtolnay/rust-toolchain
 curl -fsS https://git.perish.top/api/healthz        # {"status":"pass"}
 git ls-remote https://git.perish.top/actions/checkout v6   # action 本地可解析(替代 data.forgejo.org)
 KUBECONFIG=$HOME/Projects/perish.code/hardrig/.local/kube/mirror-lan.yaml \
-  kubectl -n ci get deploy/forgejo-runner   # runner 由 actions 拥有,此处只观测
+  kubectl -n ci get deploy/forgejo-runner   # runner 目前无属主(actions 已归档),此处只观测
 ```
 
 ## 注意

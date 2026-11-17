@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ensign-preview
+  labels:
+    app.kubernetes.io/managed-by: workshop
+    app.kubernetes.io/component: sidecar-preview
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ensign-preview
+  labels:
+    app.kubernetes.io/managed-by: workshop
+    app.kubernetes.io/component: sidecar-preview
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: ensign-preview.workshop.liberte.host
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ensign-preview
+                port:
+                  name: http

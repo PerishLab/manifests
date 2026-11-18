@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: design-preview
+  labels:
+    app.kubernetes.io/managed-by: workshop
+    app.kubernetes.io/component: sidecar-preview
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: design
+  labels:
+    app.kubernetes.io/managed-by: workshop
+    app.kubernetes.io/component: sidecar-preview
+spec:
+  parentRefs:
+    - name: dev
+  routes:
+    - kind: Rule
+      match: Host(`design.dev.workshop.liberte.host`)
+      services:
+        - name: design-preview
+          port: http

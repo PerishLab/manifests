@@ -1,0 +1,13 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: dev
+  labels:
+    app.kubernetes.io/managed-by: workshop
+spec:
+  entryPoints:
+    - websecure
+  tls: {}
+  routes:
+    - kind: Rule
+      match: HostRegexp(`^[a-z]+\.dev\.workshop\.liberte\.host$`)

@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ensign-preview
+  labels:
+    app.kubernetes.io/managed-by: workshop
+    app.kubernetes.io/component: sidecar-preview
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ensign
+  labels:
+    app.kubernetes.io/managed-by: workshop
+    app.kubernetes.io/component: sidecar-preview
+spec:
+  parentRefs:
+    - name: dev
+  routes:
+    - kind: Rule
+      match: Host(`ensign.dev.workshop.liberte.host`)
+      services:
+        - name: ensign-preview
+          port: http

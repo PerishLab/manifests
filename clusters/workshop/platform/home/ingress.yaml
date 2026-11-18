@@ -1,0 +1,13 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: workshop-home
+spec:
+  entryPoints: [websecure]
+  tls: {}
+  routes:
+    - kind: Rule
+      match: Host(`workshop.liberte.host`)
+      services:
+        - name: workshop-home
+          port: http

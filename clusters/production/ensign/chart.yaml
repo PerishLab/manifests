@@ -1,0 +1,32 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: ensign
+  namespace: ensign
+spec:
+  chart: oci://ghcr.io/perishlab/charts/ensign
+  version: 0.11.0
+  targetNamespace: ensign
+  dockerRegistrySecret:
+    name: registry
+  helmVersion: v3
+  timeout: 15m
+  backOffLimit: 1
+  failurePolicy: abort
+  valuesContent: |-
+    issuer: https://ensign.perish.cn/api
+    api:
+      tag: 0.11.0
+      replicas: 1
+    ingress:
+      enabled: true
+      className: traefik
+      host: ensign.perish.cn
+      annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
+        traefik.ingress.kubernetes.io/router.tls.certresolver: production
+    postgres:
+      bundled: true
+      image: postgres:17-alpine
+      storage: 8Gi

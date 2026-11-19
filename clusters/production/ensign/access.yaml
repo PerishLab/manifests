@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ensign-api
+  namespace: ensign
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: ensign
+    meta.helm.sh/release-namespace: ensign
+imagePullSecrets:
+  - name: registry
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ensign-bootstrap
+  namespace: ensign
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: ensign
+    meta.helm.sh/release-namespace: ensign
+imagePullSecrets:
+  - name: registry

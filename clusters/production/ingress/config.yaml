@@ -1,0 +1,27 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    deployment:
+      replicas: 1
+    persistence:
+      enabled: true
+      storageClass: local-path
+      size: 128Mi
+    podSecurityContext:
+      fsGroup: 65532
+    certificatesResolvers:
+      production:
+        acme:
+          email: libertecode@proton.me
+          storage: /data/acme.json
+          tlsChallenge: true
+    ports:
+      web:
+        redirections:
+          entryPoint:
+            to: websecure
+            scheme: https

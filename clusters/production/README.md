@@ -38,7 +38,7 @@ runseal :kube.production kubectl apply -f clusters/production/ensign/namespace.y
 runseal :kube.production kubectl apply --dry-run=server -k clusters/production
 runseal :kube.production kubectl diff -k clusters/production
 runseal :kube.production kubectl apply -k clusters/production
-runseal :kube.production helm list --all --namespace ensign
+runseal :kube.production helm list --namespace ensign
 runseal :kube.production kubectl get jobs,pods,pvc,ingress --namespace ensign
 ```
 
@@ -84,8 +84,15 @@ any consumer key artifacts, plus ACME state and exact deployment identities.
 Rendered Helm state and all Secret responses are private too. Back up through
 `runseal :kube.production` without echoing bytes; public evidence contains only
 identities, digests, counts, readiness and results. Local-path survival after
-restart is not a backup. Rehearse PostgreSQL restore into an isolated database
-and compare the identity/signing bindings before claiming recovery works.
+restart is not a backup. A recovery namespace also needs its registry credential;
+never assume private cached images can start without pull authorization. Create
+its ServiceAccounts/RBAC and matched custody before starting workloads. Bring up
+an empty independent PostgreSQL store, restore the logical dump, then run the
+product's bounded bootstrap replay and serving deployment. Do not bootstrap an
+empty replacement before restoring an occupied estate. Check health, canonical
+issuer and exact public JWKS, and compare retained sudo/signing bytes privately.
+Remove only the UID-qualified rehearsal namespace and confirm its PVC/PV cleanup;
+production and Workshop resources remain outside that deletion set.
 
 Record rollout, restart, backup/restore and runtime permission results on the
 native Issue. Reusable product black-box checks belong to Seatrial; this content

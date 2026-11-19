@@ -7,20 +7,36 @@ repository-specific constraints without copying that policy.
 
 ## Purpose
 
-Manifests carries the Kubernetes manifests for the cluster platform layer: what
-runs beneath the products and above the machines. Hardrig owns the machine and
-the K3s substrate it installs, plus access to it. Each product owns its own
-lifecycle. The layer between had no owner, and this repository is it.
+Manifests owns each cluster's deployment composition, platform resources and
+nonsecret product configuration. Hardrig owns machines, access and the K3s
+substrate; products own their reusable charts and lifecycle. Wharf, Plumb,
+Ectropy and Seatrial retain the shared delivery and verification boundaries.
+
+## Cluster declarations
+
+New clusters use a singleword purpose name such as `production` or `workshop`.
+New directories and file stems are singleword. Existing historical cluster paths
+remain in place until a separately reviewed migration. `cluster.toml` records
+purpose, the Runseal profile and references to authoritative Hardrig identity;
+it carries no kubeconfig, address or credential. All API and Helm operations,
+including validation and recovery, run through the cluster's declared profile.
+
+A cluster may consume a product's formal chart, immutable release identity and
+nonsecret instance configuration. The product retains its chart and lifecycle;
+this repository owns the cluster composition and operational adoption. Source
+Guard remains Plumb/Ectropy through Wharf. Seatrial owns reusable black-box
+qualification, not a repository-local replacement pipeline; an unrun scene is
+not passing evidence. Content-only shape creates no binary release obligation.
 
 ## Current Boundary
 
 - The repository is named for what it carries, and that name is the boundary:
-  **only Kubernetes manifests belong here.** Something that is not a manifest
-  does not become one by being placed here; when such a thing appears, its home
-  is decided rather than assumed.
+  Kubernetes declarations, their nonsecret values, cluster metadata and
+  operating guidance belong here. Product source and private runtime state do not.
 - The platform layer means ingress and its certificates, the shared data
   services, scheduling priority, the forge itself, and the sealing plane that
-  lets any of them carry a secret. It does not mean product workloads.
+  lets any of them carry a secret. Product workloads are consumed through their owning product's formal chart
+  and lifecycle, with instance values and cluster adoption declared here.
 - A manifest follows git; the plaintext it seals from does not. That split is
   Runseal's law, not a preference here: `local://` resolves below the ignored
   `.local`. Files there are mode 0600 and directories 0700.
@@ -66,9 +82,9 @@ lifecycle. The layer between had no owner, and this repository is it.
 
 ## What this repository refuses
 
-- Machine facts and cluster access. A node address, an SSH endpoint, a
-  kubeconfig: those are Hardrig's, observed rather than restated.
+- Machine facts and private cluster access. Use authoritative Hardrig references
+  and a Runseal profile, not duplicated node addresses, SSH details or kubeconfigs.
 - Credential values. The plaintext under `.local` is an input to sealing, never
   a committed artifact, and no rendered secret belongs in git.
-- Product lifecycles. A workload that belongs to a product belongs in that
-  product's repository, even when it runs on this platform.
+- Product lifecycle implementations. Product source and reusable chart templates
+  stay with the product; cluster composition and nonsecret instance values live here.

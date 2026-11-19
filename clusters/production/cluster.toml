@@ -1,0 +1,20 @@
+schema = "manifests.cluster/v1"
+name = "production"
+purpose = "Persistent production services with a stable public IPv4 entry."
+profile = "kube.production"
+
+[substrate]
+repository = "https://github.com/PerishLab/hardrig"
+host = "zxiyun.us.4fdzaa4w0g"
+declaration = "hosts/zxiyun/us.4fdzaa4w0g/host.toml"
+
+[identity]
+hostname = "ensign.perish.cn"
+issuer = "https://ensign.perish.cn/api"
+
+[delivery]
+product = "ensign"
+version = "v0.11.0"
+authority = "https://releases.ensign.perish.uk"
+chart = "oci://ghcr.io/perishlab/charts/ensign"
+digest = "sha256:5d0f9a3af0019cba450574977bdbc4d1521980f1f613a1d24b4da18250c444bd"

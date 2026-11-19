@@ -16,10 +16,14 @@ Image and chart use the same formal release marker.
 
 Provision namespace `ensign` and its private `registry` Secret before starting
 the HelmChart. The Secret is type `kubernetes.io/dockerconfigjson` and contains
-only a qualified read:packages credential for GHCR. It serves both chart download
-and image pulls; no repository or organization administration credential belongs
-in the cluster. Obtain it through private custody, never command arguments or
-committed YAML. Inventory existing secrets without printing their values.
+the owner-authorized existing package-consumption credential from
+`packages.read`. It serves chart download and image pulls. Its purpose name
+does not reduce its actual GitHub scopes; the currently reused credential has
+broader scopes than read:packages. This deployment does not claim least-privilege
+credential isolation. A future credential restriction is an explicit rotation,
+not an implicit profile fallback. Obtain it through private custody, never
+command arguments or committed YAML. Inventory existing secrets without printing
+their values.
 
 `access.yaml` supplies imagePullSecrets on the chart's two named ServiceAccounts.
 Its release metadata permits ordinary Helm adoption of those accounts; the chart
@@ -54,13 +58,16 @@ The whole hostname routes to the API, including the embedded browser assets.
 Discovery, JWKS and health are respectively below `/api/.well-known/` and
 `/api/health`. Clients and Alibaba trust use the full canonical issuer.
 
-Workshop's existing Ensign estate is not implicitly replaced by this declaration.
-Before production bootstrap, explicitly settle whether the estate is promoted
-or independent. Promotion retains a matched database/sudo/signing/consumer-key
-set, freezes source writes for the final snapshot, restores before any target
-bootstrap, verifies stable subjects and keys, and migrates consumers without
-allowing independent writable copies. Never create a fresh estate and describe
-it as a migration. Keep a source rollback reference until cutover is qualified.
+The owner selected an independent production estate. Its database, sudo and
+signing artifacts are newly generated through the product's bootstrap ceremony;
+no Workshop identities, sessions or consumer keys are copied. Workshop remains
+available under its own issuer. Identity synchronization is separate work and
+is not a prerequisite for this rollout.
+
+Initial human enrollment and administrator creation follow Ensign's documented
+sudo ceremony. Keep the sudo artifact in private recovery custody, never grant
+it to the serving identity or retain it as an application role. Establish human
+password/recovery custody explicitly; no password or recovery code belongs here.
 
 ## Persistence and recovery
 

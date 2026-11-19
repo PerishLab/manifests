@@ -11,6 +11,8 @@ declaration = "hosts/zxiyun/us.4fdzaa4w0g/host.toml"
 [identity]
 hostname = "ensign.perish.cn"
 issuer = "https://ensign.perish.cn/api"
+estate = "independent"
+synchronization = "separate"
 
 [delivery]
 product = "ensign"

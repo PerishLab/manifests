@@ -4,7 +4,7 @@ purpose = "Persistent production services with a stable public IPv4 entry."
 profile = "kube.production"
 
 [substrate]
-repository = "https://github.com/PerishLab/hardrig"
+repository = "https://github.com/PerishLab/fleet"
 host = "zxiyun.us.4fdzaa4w0g"
 declaration = "hosts/zxiyun/us.4fdzaa4w0g/host.toml"
 

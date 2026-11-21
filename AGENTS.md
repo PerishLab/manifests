@@ -8,8 +8,8 @@ repository-specific constraints without copying that policy.
 ## Purpose
 
 Manifests owns each cluster's deployment composition, platform resources and
-nonsecret product configuration. Hardrig owns machines, access and the K3s
-substrate; products own their reusable charts and lifecycle. Wharf, Plumb,
+nonsecret product configuration. Fleet and Workshop own their respective machine declarations. Hardrig provides
+machine access and K3s substrate operations. Products own their reusable charts and lifecycle. Wharf, Plumb,
 Ectropy and Seatrial retain the shared delivery and verification boundaries.
 
 ## Cluster declarations
@@ -17,7 +17,7 @@ Ectropy and Seatrial retain the shared delivery and verification boundaries.
 New clusters use a singleword purpose name such as `production` or `workshop`.
 New directories and file stems are singleword. Existing historical cluster paths
 remain in place until a separately reviewed migration. `cluster.toml` records
-purpose, the Runseal profile and references to authoritative Hardrig identity;
+purpose, the Runseal profile and the owning repository and stable Hardrig host identity;
 it carries no kubeconfig, address or credential. All API and Helm operations,
 including validation and recovery, run through the cluster's declared profile.
 
@@ -82,7 +82,7 @@ not passing evidence. Content-only shape creates no binary release obligation.
 
 ## What this repository refuses
 
-- Machine facts and private cluster access. Use authoritative Hardrig references
+- Machine facts and private cluster access. Use the owning repository’s host declaration
   and a Runseal profile, not duplicated node addresses, SSH details or kubeconfigs.
 - Credential values. The plaintext under `.local` is an input to sealing, never
   a committed artifact, and no rendered secret belongs in git.

@@ -3,5 +3,6 @@ kind: Kustomization
 namespace: dev
 resources:
   - namespace.yaml
+  - agent.yaml
   - ingress.yaml
   - services

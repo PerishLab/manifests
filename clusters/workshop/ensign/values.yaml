@@ -1,0 +1,14 @@
+issuer: https://ensign.workshop.liberte.host/api
+api:
+  replicas: 1
+  pullPolicy: IfNotPresent
+ingress:
+  enabled: true
+  className: traefik
+  host: ensign.workshop.liberte.host
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+postgres:
+  bundled: true
+  storage: 1Gi

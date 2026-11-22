@@ -20,3 +20,8 @@ note = "Repository licensing."
 [[layout.file]]
 name = ["plumb.toml", "ectropy.toml", "runseal.toml", ".gitignore"]
 note = "Governance declarations."
+
+[[layout.seat]]
+path = "clusters/workshop/locus"
+scan = ["clusters/workshop/locus/**/*.py"]
+note = "Isolated Locus pilot deployment and measurements."

@@ -2,6 +2,14 @@ issuer: https://ensign.workshop.liberte.host/api
 api:
   replicas: 1
   pullPolicy: IfNotPresent
+web:
+  enabled: true
+  replicas: 1
+  pullPolicy: IfNotPresent
+  client:
+    issuer: https://ensign.workshop.liberte.host/api
+    client: ensignweb-formal
+    folio: https://folio.workshop.liberte.host
 ingress:
   enabled: true
   className: traefik
@@ -12,3 +20,16 @@ ingress:
 postgres:
   bundled: true
   storage: 1Gi
+locus:
+  enabled: true
+  endpoint: https://api.locus.workshop.liberte.host
+  producer: ensign-web
+  origins:
+    - https://ensign.workshop.liberte.host
+  forwarded: true
+  rpm: 120
+  burst: 30
+  buffer: /tmp/ensign-locus-relay/spool
+  keySecret:
+    name: ensign-locus-key
+    key: value

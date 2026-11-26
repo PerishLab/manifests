@@ -1,3 +1,0 @@
-[env.vars]
-MANIFESTS_LOCAL_DIR = "local://"
-MANIFESTS_VALUES_DIR = "local://secrets"

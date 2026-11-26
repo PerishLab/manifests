@@ -10,7 +10,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, override
 
 STEP = 15
 NANO = 1_000_000_000
@@ -20,6 +20,7 @@ UTC = re.compile(r"(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d)(?:\.(\d{1,9}))?Z")
 
 
 class Fixed(urllib.request.HTTPRedirectHandler):
+    @override
     def redirect_request(self, *request):
         return None
 

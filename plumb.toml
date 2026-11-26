@@ -18,10 +18,14 @@ name = ["LICENSE"]
 note = "Repository licensing."
 
 [[layout.file]]
-name = ["plumb.toml", "ectropy.toml", "runseal.toml", ".gitignore"]
+name = ["plumb.toml", ".gitignore"]
 note = "Governance declarations."
 
 [[layout.seat]]
 path = "clusters/workshop/locus"
 scan = ["clusters/workshop/locus/**/*.py"]
 note = "Isolated Locus pilot deployment and measurements."
+
+[runseal.env.vars]
+MANIFESTS_LOCAL_DIR = "local://"
+MANIFESTS_VALUES_DIR = "local://secrets"

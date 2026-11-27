@@ -2,7 +2,7 @@
 
 本机 checkout 的集群入口是 `~/Projects/perish.lab/manifests/clusters/workshop`。根 [Kustomization](kustomization.yaml) 组合 [平台组件](platform/kustomization.yaml) 和 [命名空间](namespaces/kustomization.yaml)。`dev` 的 [父入口](namespaces/dev/ingress.yaml) 统一处理泳道的 HTTPS，服务声明各自用子 IngressRoute 匹配完整 Host。无 selector 的预览 Service 接收按现场动态连接的 EndpointSlice。接线命令见 [Workshop 本机入口](https://github.com/PerishLab/workshop/blob/main/instances/personal/README.md)。
 
-[Ensign 实例配置](ensign/README.md) 由产品 Helm chart 读取，独立于根 Kustomization。当前活动资源和操作者身份以现场查询为准。对既有资源迁入声明前，先核实 owner、原生任务和控制器。
+[Ensign 实例配置](ensign/README.md) 与 [Folio 实例配置](folio/README.md) 由各自产品 Helm chart 读取，独立于根 Kustomization。当前活动资源和操作者身份以现场查询为准。对既有资源迁入声明前，先核实 owner、原生任务和控制器。
 
 [独立 Locus 指标试点](locus/README.md)的部署、采样和复盘沿 [Workshop #86](https://github.com/PerishLab/workshop/issues/86) 验收。
 

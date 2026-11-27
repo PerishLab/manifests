@@ -1,0 +1,44 @@
+issuer: https://ensign.workshop.liberte.host/api
+audience: folio
+apps:
+  - ensign
+  - folio
+image:
+  repository: ghcr.io/perishlab/folio
+  tag: ""
+  pullPolicy: IfNotPresent
+storage:
+  size: 1Gi
+  existingClaim: folio-data-v2
+web:
+  enabled: true
+  replicas: 1
+  port: 8080
+  image:
+    repository: ghcr.io/perishlab/folio-web
+    tag: ""
+    pullPolicy: IfNotPresent
+  client:
+    issuer: https://ensign.workshop.liberte.host/api
+    client: folioweb
+    audience: folio
+    endpoint: /oidc
+ingress:
+  enabled: true
+  className: traefik
+  host: folio.workshop.liberte.host
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+locus:
+  enabled: true
+  endpoint: https://api.locus.workshop.liberte.host
+  producer: folio-web
+  origins:
+    - https://folio.workshop.liberte.host
+  forwarded: true
+  rpm: 120
+  burst: 30
+  keySecret:
+    name: folio-locus-key
+    key: value
